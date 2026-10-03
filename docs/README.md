@@ -1,5 +1,8 @@
-# pkg-manager docs
+# cli docs
 
-1. [Docker images](docker.md) — image tree, dependencies, rules
+1. [Architecture](architecture.md) — the single-tool model and its boundaries
+2. [Docker](docker.md) — the image, contents, and rules
 
-**CI:** Pull requests are validated in-repo via [`.github/workflows/`](../.github/workflows/). See [test.yml](../.github/workflows/test.yml) and [release.yml](../.github/workflows/release.yml).
+**CI:** pull requests run Go checks plus an image smoke test — see
+[`.github/workflows/test.yml`](../.github/workflows/test.yml). Releases are
+tag-driven — see [`.github/workflows/release.yml`](../.github/workflows/release.yml).

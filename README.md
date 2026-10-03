@@ -1,52 +1,53 @@
-# pkg-manager
+# cli
 
-A multi-language package repo — one **versioned, pinned Docker image per language toolchain**, built on Alpine. Foundational: no UI, no application code. Each image is a self-contained build/test environment for its language.
+The kapetim repository toolchain — one Go binary and one pinned Docker image.
+Repositories use it as the base for their workflows (validation, markdown
+rendering, and shared tooling) instead of each wiring their own.
 
-| Tag | Contents |
+- **Binary:** `cli` — Go, static; local file validation and rendering.
+- **Image:** `kapetim/cli:<v>` — the binary, the Go toolchain, and the shared
+  tooling (`git`, `jq`/`yq`, `shellcheck`, `hadolint`, `actionlint`).
+
+## Commands
+
+| Command | Purpose |
 | --- | --- |
-| `:<v>-node` | node/npm + markdownlint-cli |
-| `:<v>-python` | python3 + yamllint |
-| `:<v>-rust` | rust/cargo |
-| `:<v>-cpp` | gcc/g++/make/cmake/clang |
-| `:<v>-go` | golang |
-| `:<v>-java` | OpenJDK 21 / Maven / Gradle |
-| `:<v>-media` | ffmpeg + imagemagick |
+| `cli validate [paths...]` | validate markdown table structure and cell widths |
+| `cli render [paths...]` | render markdown to HTML (planned) |
+| `cli version` | print the version |
+| `cli help` | show usage |
 
-Every dependency — Alpine base, apk packages (exact versions), npm packages — is pinned in `docker/runtime/versions.env`. Tags are versioned only (`<version>-<variant>`, no `latest`, no bare aliases). Images are self-contained (no shared base inheritance).
-
-## Build and run
+## Build
 
 ```bash
-docker build -f docker/node.dockerfile -t pkg-manager:1.8.0-node .
-docker run --rm -v "$PWD:/repo" -w /repo pkg-manager:1.8.0-node node --version
-docker run --rm -v "$PWD:/repo" -w /repo pkg-manager:1.8.0-python python3 --version
-docker run --rm -v "$PWD:/repo" -w /repo pkg-manager:1.8.0-rust cargo --version
+go build -o cli ./src/cmd/cli
+./cli version
 ```
 
-## Build locally
+## Image
 
 ```bash
-docker build -f docker/node.dockerfile -t pkg-manager-node .
-docker build -f docker/python.dockerfile -t pkg-manager-python .
+docker build -t kapetim/cli:0.1.0 .
+docker run --rm -v "$PWD:/repo" -w /repo kapetim/cli:0.1.0 cli validate .
 ```
-
-## Release
-
-Tag-driven: pushing a bare `X.Y.Z` tag opens a GitHub release (`.github/workflows/release.yml`). The `VERSION` file must be bumped in the merged PR; `main` pushes auto-tag it.
-
-## Docs
-
-- [`docs/docker.md`](docs/docker.md) — image tree, dependencies, rules
-- [`docs/README.md`](docs/README.md) — docs index
 
 ## Layout
 
 ```text
-docker/                 image variants + runtime installers
-  runtime/              install-*.sh + versions.env (pinned deps)
-docs/                   docs
-.github/workflows/
-  test.yml              PR checks (markdownlint + build smoke per image)
-  release.yml           release (tag + GitHub release)
+src/            Go source (cmd/cli + internal packages)
+Dockerfile      the single image
+docker/runtime/ pinned installers + versions.env
+scripts/        operational shell (bootstrap, release)
+docs/           documentation
 ```
 
+## Docs
+
+- [`docs/architecture.md`](docs/architecture.md) — what this repo is and why
+- [`docs/docker.md`](docs/docker.md) — the image, contents, and rules
+- [`docs/README.md`](docs/README.md) — docs index
+
+## Release
+
+Tag-driven: pushing a bare `X.Y.Z` tag creates a GitHub release and publishes
+the image. `VERSION` is bumped in the merged PR; `main` pushes auto-tag it.

@@ -3,45 +3,48 @@ name: CI
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: [main]
 
 permissions:
   contents: read
 
 jobs:
-  lint:
-    name: Lint (markdown)
+  go:
+    name: Go checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-go@v5
         with:
-          node-version: 22
-      - run: npm install --global --no-audit --no-fund markdownlint-cli@0.49.1
-      - run: markdownlint '**/*.md'
+          go-version: "1.23"
+      - name: Vet
+        run: go vet ./...
+      - name: Build
+        run: go build -o cli ./src/cmd/cli
+      - name: Test
+        run: go test ./...
+      - name: Self-validate (markdown)
+        run: ./cli validate .
 
-  images:
-    name: Build image (${{ matrix.variant }})
+  image:
+    name: Image smoke test
     runs-on: ubuntu-latest
-    timeout-minutes: 40
-    strategy:
-      fail-fast: false
-      matrix:
-        variant: [node, python, rust, cpp, go, java, media]
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - name: docker build — ${{ matrix.variant }}
-        run: |
-          docker build -f docker/${{ matrix.variant }}.dockerfile \
-            -t pkg-manager-${{ matrix.variant }} .
-      - name: Tool presence check — ${{ matrix.variant }}
+      - name: Build image
+        run: docker build -t cli:test .
+      - name: Tool presence
         run: |
           set -euo pipefail
-          case "${{ matrix.variant }}" in
-            node)   docker run --rm pkg-manager-node   sh -lc 'node --version && npm --version && markdownlint --version' ;;
-            python) docker run --rm pkg-manager-python sh -lc 'python3 --version && yamllint --version' ;;
-            rust)   docker run --rm pkg-manager-rust   sh -lc 'rustc --version && cargo --version' ;;
-            cpp)    docker run --rm pkg-manager-cpp    sh -lc 'g++ --version && cmake --version && clang-format --version' ;;
-            go)     docker run --rm pkg-manager-go     sh -lc 'go version' ;;
-            java)   docker run --rm pkg-manager-java   sh -lc 'java -version && mvn -version && gradle --version' ;;
-            media)  docker run --rm pkg-manager-media  sh -lc 'ffmpeg -version && magick -version' ;;
-          esac
+          docker run --rm cli:test sh -c '
+            cli version &&
+            go version &&
+            git --version &&
+            jq --version &&
+            yq --version &&
+            shellcheck --version &&
+            actionlint --version &&
+            hadolint --version
+          '
