@@ -96,8 +96,8 @@ jobs:
           version="${GITHUB_REF_NAME#v}"
           name="cli-${GOOS}-${GOARCH}"
           go build -trimpath \
-            -ldflags "-s -w -X github.com/kapetim/cli/src/internal/version.Version=${version}" \
-            -o "$name" ./src/cmd/cli
+            -ldflags "-s -w -X github.com/kapetim/cli/src/pkg/version.Version=${version}" \
+            -o "$name" ./src
       - name: Upload to release
         uses: softprops/action-gh-release@v2
         with:

@@ -21,11 +21,11 @@ jobs:
       - name: Vet
         run: go vet ./...
       - name: Build
-        run: go build -o cli ./src/cmd/cli
-      - name: Test
+        run: go build -o cli ./src
+      - name: Unit tests
         run: go test ./...
-      - name: Self-validate (markdown)
-        run: ./cli validate .
+      - name: Integration tests
+        run: bash tests/run.sh
 
   image:
     name: Image smoke test
@@ -41,9 +41,8 @@ jobs:
           docker run --rm cli:test sh -c '
             cli version &&
             git --version &&
-            git lfs version &&
             jq --version &&
             shellcheck --version &&
-            zip --version | head -1 &&
-            unzip -v | head -1
+            actionlint --version &&
+            hadolint --version
           '
