@@ -26,9 +26,9 @@ Common flags: `--dir <path>` (repo root), `--manifest <path>` (default `tables.j
 Shell / workflow (no code):
 
 ```bash
-docker run --rm -v "$PWD:/repo" -w /repo kapetim/cli:0.1.0 cli lint all
-docker run --rm -v "$PWD:/repo" -w /repo kapetim/cli:0.1.0 cli scan tables
-docker run --rm -v "$PWD:/repo" -w /repo kapetim/cli:0.1.0 cli validate tables
+docker run --rm -v "$PWD:/repo" -w /repo kapetim/cli:0.2.0 cli lint all
+docker run --rm -v "$PWD:/repo" -w /repo kapetim/cli:0.2.0 cli scan tables
+docker run --rm -v "$PWD:/repo" -w /repo kapetim/cli:0.2.0 cli validate tables
 ```
 
 Go repo — import the module:

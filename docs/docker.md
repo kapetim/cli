@@ -19,8 +19,8 @@ binary and the native linters it calls. **No Node, no Python, no Go toolchain.**
 ## Build and run
 
 ```bash
-docker build -t kapetim/cli:0.1.0 .
-docker run --rm -v "$PWD:/repo" -w /repo kapetim/cli:0.1.0 cli lint all
+docker build -t kapetim/cli:0.2.0 .
+docker run --rm -v "$PWD:/repo" -w /repo kapetim/cli:0.2.0 cli lint all
 ```
 
 ## Rules
