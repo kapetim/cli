@@ -1,12 +1,13 @@
 # cli
 
-The kapetim repository toolchain — one Go binary and one pinned Docker image.
-Repositories use it as the base for their workflows (validation, markdown
-rendering, and shared tooling) instead of each wiring their own.
+The kapetim repository toolchain — a Go **module** and a **binary**, shipped as
+one lean Docker image. Repositories either import the module in a small Go
+script, or run the binary from the image when they have no code.
 
-- **Binary:** `cli` — Go, static; local file validation and rendering.
-- **Image:** `kapetim/cli:<v>` — the binary, the Go toolchain, and the shared
-  tooling (`git`, `jq`/`yq`, `shellcheck`, `hadolint`, `actionlint`).
+- **Binary:** `cli` — validation, rendering, generation.
+- **Module:** `github.com/kapetim/cli/src/pkg/...` — import reusable functions.
+- **Image:** `kapetim/cli:<v>` — the binary plus the minimal workflow tooling
+  (`git`/`git-lfs`, `jq`, `shellcheck`, `zip`/`unzip`).
 
 ## Commands
 
@@ -17,6 +18,22 @@ rendering, and shared tooling) instead of each wiring their own.
 | `cli version` | print the version |
 | `cli help` | show usage |
 
+## Use
+
+Shell-only (no code) — run the image:
+
+```bash
+docker run --rm -v "$PWD:/repo" -w /repo kapetim/cli:0.1.0 cli validate .
+```
+
+Go repo — import the module in a small script and use your own toolchain:
+
+```go
+import "github.com/kapetim/cli/src/pkg/validate"
+
+func main() { _ = validate.Run(os.Args[1:]) }
+```
+
 ## Build
 
 ```bash
@@ -24,30 +41,27 @@ go build -o cli ./src/cmd/cli
 ./cli version
 ```
 
-## Image
-
-```bash
-docker build -t kapetim/cli:0.1.0 .
-docker run --rm -v "$PWD:/repo" -w /repo kapetim/cli:0.1.0 cli validate .
-```
-
 ## Layout
 
 ```text
-src/            Go source (cmd/cli + internal packages)
-Dockerfile      the single image
+src/cmd/cli     binary entrypoint
+src/pkg/        public, importable packages
+src/internal/   private wiring
+Dockerfile      the single lean image
 docker/runtime/ pinned installers + versions.env
 scripts/        operational shell (bootstrap, release)
 docs/           documentation
 ```
 
+## Versioning
+
+`VERSION` is bare semver (`x.y.z`). The git tag follows the Go rule (`vX.Y.Z`);
+the Docker tag follows the Docker rule (`kapetim/cli:X.Y.Z`) — same number.
+Tag-driven: `main` pushes auto-tag, and the release publishes the image and the
+`cli` binaries.
+
 ## Docs
 
 - [`docs/architecture.md`](docs/architecture.md) — what this repo is and why
-- [`docs/docker.md`](docs/docker.md) — the image, contents, and rules
+- [`docs/docker.md`](docs/docker.md) — the image, contents, and future additions
 - [`docs/README.md`](docs/README.md) — docs index
-
-## Release
-
-Tag-driven: pushing a bare `X.Y.Z` tag creates a GitHub release and publishes
-the image. `VERSION` is bumped in the merged PR; `main` pushes auto-tag it.

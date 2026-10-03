@@ -1,41 +1,35 @@
 # Architecture
 
-`cli` is the kapetim repository toolchain: **one Go binary** and **one Docker
-image**. Repositories use it as the base for their workflows instead of each
-installing and wiring their own validation tooling.
+`cli` is both a **Go module** and a **binary**, shipped as one lean Docker
+image. Repositories import the module when they have code; when they have none,
+they run the binary from the image.
 
-## Model
+## Two usage modes
 
-- **Go** — the only language here. Local file validation, markdown rendering,
-  and generation live in the binary, so there is no Node/Python runtime to
-  carry around.
-- **Shell** — operational glue for this repo only (`scripts/`).
-- **No Node, no Python.** Markdown/YAML/JSON rules are implemented in Go;
-  anything else is a pinned native binary in the image.
+| Mode | Consumer | How |
+| --- | --- | --- |
+| **CLI** | repos with shell scripts only | `kapetim/cli:<v> cli <command>` |
+| **Import** | repos with Go code | `import "github.com/kapetim/cli/src/pkg/..."` |
 
-Complex, dynamic web scraping is **not** here — it lives in the data-science
-repo, where those dependencies belong.
-
-## Boundaries
-
-| Concern | Where |
-| --- | --- |
-| Validate markdown (tables, cells, structure) | `cli` binary |
-| Render markdown to HTML (planned) | `cli` binary |
-| Generate repo manifests (planned) | `cli` binary |
-| Shared tooling (git, jq/yq, lint trio) | image |
-| Build/test Go | image + Go toolchain |
+The module is `github.com/kapetim/cli`; public packages live under `src/pkg/`,
+private wiring under `src/internal/`, and the entrypoint under `src/cmd/cli`.
 
 ## Image
 
-One image, `kapetim/cli:<v>`. It carries the `cli` binary, the Go toolchain,
-and the shared tooling. Other repos do:
+One lean image, `kapetim/cli:<v>`: the `cli` binary plus the minimal workflow
+tooling (`git`/`git-lfs`, `jq`, `shellcheck`, `zip`/`unzip`). **No Go toolchain**
+— Go repos bring their own. See [docker.md](docker.md) for the future-additions
+list.
 
-```bash
-docker run --rm -v "$PWD:/repo" -w /repo kapetim/cli:<v> cli validate .
-```
+## Boundaries
 
-## Naming
+- **Local validation/rendering** lives in the binary/module (Go), so there is no
+  Node/Python runtime to carry.
+- **Products keep their language**: browser-extensions is TS, data-science is
+  Python — only their markdown/doc validation moves to `cli`.
+- **Shell** in this repo (`scripts/`) is operational only.
 
-`cli` everywhere: the repo, the binary, and the image (`kapetim/cli`). The Go
-module is `github.com/kapetim/cli`.
+## Versioning
+
+`VERSION` is bare semver (`x.y.z`). Git tags use the Go rule (`vX.Y.Z`); Docker
+tags use the Docker rule (`kapetim/cli:X.Y.Z`) — the same number.

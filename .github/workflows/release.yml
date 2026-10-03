@@ -1,7 +1,9 @@
 name: Release
 
-# Tag-driven release: git tag X.Y.Z -> GitHub release + binaries + image push.
-# Tags are bare x.y.z (no v prefix). VERSION must be bumped in the merged PR.
+# Tag-driven release. VERSION is bare semver (x.y.z); CI creates the git tag
+# with a `v` prefix (Go module rule: vX.Y.Z) and pushes the Docker image with
+# the bare number (Docker rule: kapetim/cli:X.Y.Z).
+#
 # Image push to Docker Hub requires DOCKERHUB_USERNAME / DOCKERHUB_TOKEN secrets.
 
 on:
@@ -9,6 +11,7 @@ on:
   push:
     tags:
       - "[0-9]*"
+      - "v[0-9]*"
     branches:
       - main
 
@@ -38,12 +41,12 @@ jobs:
           if [[ "$msg" == "chore(release):"* ]]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          if git tag --points-at HEAD | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+          if git tag --points-at HEAD | grep -qE '^v?[0-9]+\.[0-9]+\.[0-9]+$'; then
             echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0
           fi
           echo "skip=false" >> "$GITHUB_OUTPUT"
       - id: tag
-        name: Tag merged VERSION
+        name: Tag merged VERSION (vX.Y.Z)
         if: steps.guard.outputs.skip != 'true'
         run: |
           set -euo pipefail
@@ -52,8 +55,8 @@ jobs:
             echo "VERSION must be bare semver x.y.z, got: ${version}" >&2
             exit 1
           fi
-          git tag "${version}"
-          git push origin "${version}"
+          git tag "v${version}"
+          git push origin "v${version}"
 
   release:
     name: GitHub release
@@ -90,9 +93,10 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
         run: |
           set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
           name="cli-${GOOS}-${GOARCH}"
           go build -trimpath \
-            -ldflags "-s -w -X github.com/kapetim/cli/src/internal/version.Version=${GITHUB_REF_NAME}" \
+            -ldflags "-s -w -X github.com/kapetim/cli/src/internal/version.Version=${version}" \
             -o "$name" ./src/cmd/cli
       - name: Upload to release
         uses: softprops/action-gh-release@v2
@@ -124,6 +128,7 @@ jobs:
         name: Build and push
         run: |
           set -euo pipefail
-          image="kapetim/cli:${GITHUB_REF_NAME}"
+          version="${GITHUB_REF_NAME#v}"
+          image="kapetim/cli:${version}"
           docker build -t "$image" .
           docker push "$image"

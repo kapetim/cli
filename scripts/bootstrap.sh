@@ -30,7 +30,8 @@ case "$arch" in
 esac
 
 asset="cli-${os}-${arch}"
-url="https://github.com/${OWNER}/${REPO}/releases/download/${VERSION}/${asset}"
+# Git tags carry the Go `v` prefix (vX.Y.Z); the release asset is versionless.
+url="https://github.com/${OWNER}/${REPO}/releases/download/v${VERSION}/${asset}"
 
 mkdir -p "$BIN_DIR"
 echo "[bootstrap] fetching ${asset} (${VERSION})"

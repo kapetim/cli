@@ -1,11 +1,14 @@
-# cli toolchain image — one pinned image with the `cli` binary, the Go toolchain,
-# and the shared repository tooling (git, jq/yq, shellcheck/hadolint/actionlint).
+# cli toolchain image — one lean, pinned image with the `cli` binary and the
+# minimal workflow tooling (git, git-lfs, zip/unzip, jq, shellcheck).
 #
 # Other repositories use this image as the base for their workflows:
 #   docker run --rm -v "$PWD:/repo" -w /repo kapetim/cli:<v> cli validate .
 #
-# Multi-stage: the `build` stage compiles the binary; the `final` stage ships it
-# plus the toolchain. All versions are pinned in docker/runtime/versions.env.
+# Go repos do NOT use this image to build; they import the module
+# (github.com/kapetim/cli/src/pkg/...) with their own Go toolchain.
+#
+# Multi-stage: `build` compiles the binary; `final` ships it with the tooling.
+# Versions are pinned in docker/runtime/versions.env.
 
 FROM alpine:3.21 AS build
 
@@ -26,7 +29,6 @@ COPY docker/runtime /install/
 RUN apk add --no-cache bash \
     && bash /install/install-core.sh \
     && bash /install/install-tools.sh \
-    && bash /install/install-go.sh \
     && rm -rf /install
 
 WORKDIR /repo

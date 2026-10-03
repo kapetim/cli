@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/kapetim/cli/src/internal/render"
-	"github.com/kapetim/cli/src/internal/validate"
 	"github.com/kapetim/cli/src/internal/version"
+	"github.com/kapetim/cli/src/pkg/render"
+	"github.com/kapetim/cli/src/pkg/validate"
 )
 
 const usage = `cli — kapetim repository toolchain

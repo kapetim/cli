@@ -40,11 +40,10 @@ jobs:
           set -euo pipefail
           docker run --rm cli:test sh -c '
             cli version &&
-            go version &&
             git --version &&
+            git lfs version &&
             jq --version &&
-            yq --version &&
             shellcheck --version &&
-            actionlint --version &&
-            hadolint --version
+            zip --version | head -1 &&
+            unzip -v | head -1
           '
