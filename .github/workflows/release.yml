@@ -1,8 +1,11 @@
 name: Release
 
-# Tag-driven release. VERSION is bare semver (x.y.z); CI creates the git tag
-# with a `v` prefix (Go module rule: vX.Y.Z) and pushes the Docker image with
-# the bare number (Docker rule: kapetim/cli:X.Y.Z).
+# Tag-driven release. VERSION is bare semver (x.y.z); the git tag carries the Go
+# `v` prefix (vX.Y.Z) and the Docker tag is the bare number (kapetim/cli:X.Y.Z).
+#
+# One pass: `prepare` resolves the version and creates the tag when missing, then
+# `release`, `binary` and `image` run in the SAME workflow run (a tag pushed with
+# GITHUB_TOKEN would not re-trigger the workflow).
 #
 # Image push to Docker Hub requires DOCKERHUB_USERNAME / DOCKERHUB_TOKEN secrets.
 
@@ -23,56 +26,64 @@ permissions:
   contents: write
 
 jobs:
-  auto-tag:
-    name: Auto-version + tag
-    if: github.ref == 'refs/heads/main'
+  prepare:
+    name: Resolve version + tag
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      tag: ${{ steps.v.outputs.tag }}
+      release: ${{ steps.v.outputs.release }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           persist-credentials: true
-      - id: guard
-        name: Guard (skip release commits / already tagged)
+      - id: v
         run: |
           set -euo pipefail
-          msg="$(git log -1 --pretty=%s)"
-          if [[ "$msg" == "chore(release):"* ]]; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            tag="${GITHUB_REF_NAME}"
+            echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+            echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
-          if git tag --points-at HEAD | grep -qE '^v?[0-9]+\.[0-9]+\.[0-9]+$'; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0
-          fi
-          echo "skip=false" >> "$GITHUB_OUTPUT"
-      - id: tag
-        name: Tag merged VERSION (vX.Y.Z)
-        if: steps.guard.outputs.skip != 'true'
-        run: |
-          set -euo pipefail
           version="$(tr -d '[:space:]' < VERSION)"
           if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "VERSION must be bare semver x.y.z, got: ${version}" >&2
             exit 1
           fi
-          git tag "v${version}"
-          git push origin "v${version}"
+          tag="v${version}"
+          if git ls-remote --tags origin "refs/tags/${tag}" | grep -q .; then
+            echo "tag ${tag} already exists — nothing to release"
+            echo "version=${version}" >> "$GITHUB_OUTPUT"
+            echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git tag "${tag}"
+          git push origin "${tag}"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          echo "release=true" >> "$GITHUB_OUTPUT"
 
   release:
     name: GitHub release
-    needs: auto-tag
-    if: startsWith(github.ref, 'refs/tags/')
+    needs: prepare
+    if: needs.prepare.outputs.release == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ needs.prepare.outputs.tag }}
           generate_release_notes: true
 
   binary:
     name: Binary (${{ matrix.goos }}/${{ matrix.goarch }})
-    needs: auto-tag
-    if: startsWith(github.ref, 'refs/tags/')
+    needs: prepare
+    if: needs.prepare.outputs.release == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -93,20 +104,20 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
         run: |
           set -euo pipefail
-          version="${GITHUB_REF_NAME#v}"
           name="cli-${GOOS}-${GOARCH}"
           go build -trimpath \
-            -ldflags "-s -w -X github.com/kapetim/cli/src/pkg/version.Version=${version}" \
+            -ldflags "-s -w -X github.com/kapetim/cli/src/pkg/version.Version=${{ needs.prepare.outputs.version }}" \
             -o "$name" ./src
       - name: Upload to release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ needs.prepare.outputs.tag }}
           files: cli-${{ matrix.goos }}-${{ matrix.goarch }}
 
   image:
     name: Publish image (Docker Hub)
-    needs: auto-tag
-    if: startsWith(github.ref, 'refs/tags/')
+    needs: prepare
+    if: needs.prepare.outputs.release == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -128,7 +139,6 @@ jobs:
         name: Build and push
         run: |
           set -euo pipefail
-          version="${GITHUB_REF_NAME#v}"
-          image="kapetim/cli:${version}"
+          image="kapetim/cli:${{ needs.prepare.outputs.version }}"
           docker build -t "$image" .
           docker push "$image"
