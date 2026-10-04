@@ -81,11 +81,17 @@ func lintDocker(dir string) []error {
 		logx.Skip("hadolint not installed")
 		return nil
 	}
-	p := filepath.Join(dir, "Dockerfile")
-	if _, err := os.Stat(p); err != nil {
+	files, err := fsx.Files(dir, func(p string) bool {
+		base := filepath.Base(p)
+		return base == "Dockerfile" || strings.HasSuffix(base, ".Dockerfile")
+	})
+	if err != nil {
+		return []error{err}
+	}
+	if len(files) == 0 {
 		return nil
 	}
-	return run(dir, "hadolint", []string{p})
+	return run(dir, "hadolint", files)
 }
 
 func lintCI(dir string) []error {

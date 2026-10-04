@@ -12,8 +12,9 @@ they run the binary from the image.
 | **Import** | repos with Go code | `import "github.com/kapetim/cli/src/pkg/..."` |
 
 The module is `github.com/kapetim/cli`; the entrypoint is `src/main.go`, public
-packages live under `src/pkg/`, and unit tests under `src/test/`. Integration
-tests (`tests/`) and shell (`scripts/`) sit outside the Go tree.
+packages live under `src/pkg/`, unit + integration tests under `src/test/`, and
+docs under `src/docs/`. Shell (`scripts/`) and the image (`docker/`) sit beside
+the Go tree.
 
 ## Boundaries
 
