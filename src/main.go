@@ -19,7 +19,7 @@ Usage:
 
 Commands:
   lint [kinds...]        run linters (markdown, shell, docker, ci)
-  validate [kinds...]    run checks (tables)
+  validate [kinds...]    run checks (tables, filenames, case)
   scan tables            write the table manifest
   version                print the version
   help                   show this help

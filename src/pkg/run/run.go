@@ -44,17 +44,31 @@ func Main(o Options) int {
 		logx.OK("lint clean")
 	}
 
-	for _, kind := range o.Validate {
+	kinds := o.Validate
+	for _, k := range kinds {
+		if k == "all" {
+			kinds = []string{"tables", "filenames", "case"}
+			break
+		}
+	}
+	for _, kind := range kinds {
 		switch kind {
-		case "tables", "all":
+		case "tables":
 			path := resolve(o.RepoDir, o.Manifest)
 			if errs := validate.Tables(o.RepoDir, path); len(errs) > 0 {
-				for _, e := range errs {
-					logx.Fail("%v", e)
-				}
-				return logx.ExitValidation
+				return report(errs)
 			}
 			logx.OK("tables match %s", o.Manifest)
+		case "filenames":
+			if errs := validate.Filenames(o.RepoDir, cfg.Filenames); len(errs) > 0 {
+				return report(errs)
+			}
+			logx.OK("filenames clean")
+		case "case":
+			if errs := validate.Case(o.RepoDir, cfg.Filenames); len(errs) > 0 {
+				return report(errs)
+			}
+			logx.OK("no case collisions")
 		default:
 			logx.Fail("unknown validation: %s", kind)
 			return logx.ExitValidation
@@ -62,6 +76,13 @@ func Main(o Options) int {
 	}
 
 	return logx.ExitOK
+}
+
+func report(errs []error) int {
+	for _, e := range errs {
+		logx.Fail("%v", e)
+	}
+	return logx.ExitValidation
 }
 
 func resolve(dir, p string) string {

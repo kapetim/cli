@@ -17,10 +17,20 @@ type Markdown struct {
 	MaxCell int `json:"maxCell"`
 }
 
+// Filenames holds filename-convention settings for `validate filenames`.
+type Filenames struct {
+	Readme      string   `json:"readme"`      // upper | lower | any
+	Dockerfiles bool     `json:"dockerfiles"` // allow Dockerfile / *.Dockerfile
+	Allow       []string `json:"allow"`       // exact uppercase names that are allowed
+	Extensions  []string `json:"extensions"`  // allowed file extensions (lowercase)
+	Skip        []string `json:"skip"`        // directory names to skip
+}
+
 // Config is the effective configuration.
 type Config struct {
-	Markdown Markdown `json:"markdown"`
-	Linters  []string `json:"linters"`
+	Markdown  Markdown  `json:"markdown"`
+	Linters   []string  `json:"linters"`
+	Filenames Filenames `json:"filenames"`
 }
 
 // Defaults returns the embedded defaults.
