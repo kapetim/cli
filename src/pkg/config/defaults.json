@@ -1,4 +1,15 @@
 {
   "markdown": { "maxCell": 99 },
-  "linters": ["markdown", "shell", "docker", "ci"]
+  "linters": ["markdown", "shell", "docker", "ci"],
+  "filenames": {
+    "readme": "upper",
+    "dockerfiles": true,
+    "allow": [],
+    "extensions": [
+      "md", "pdf", "json", "jpg", "jpeg", "png", "go", "sh",
+      "sum", "mod", "yml", "yaml", "txt", "tex",
+      "Dockerfile", "gitignore", "gitattributes", "dockerignore"
+    ],
+    "skip": ["vendor"]
+  }
 }
