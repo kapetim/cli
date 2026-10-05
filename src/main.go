@@ -64,7 +64,7 @@ func main() {
 
 	switch cmd {
 	case "version", "--version", "-v":
-		fmt.Println("cli " + version.Version)
+		fmt.Println("cli " + version.Resolved())
 	case "help", "-h", "--help":
 		fmt.Println(usage)
 	case "lint":
