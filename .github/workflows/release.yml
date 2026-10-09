@@ -140,5 +140,5 @@ jobs:
         run: |
           set -euo pipefail
           image="kapetim/cli:${{ needs.prepare.outputs.version }}"
-          docker build -t "$image" .
+          docker build -f docker/cli.Dockerfile -t "$image" .
           docker push "$image"
