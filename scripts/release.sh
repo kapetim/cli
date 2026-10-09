@@ -6,7 +6,7 @@
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-VERSION="$(tr -d '[:space:]' < "$REPO_DIR/VERSION")"
+VERSION="$(tr -d '[:space:]' < "$REPO_DIR/src/VERSION")"
 IMAGE="kapetim/cli:${VERSION}"
 
 PUSH=0

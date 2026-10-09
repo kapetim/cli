@@ -60,7 +60,7 @@ scripts/               operational shell
 
 ## Versioning
 
-`VERSION` is bare semver (`x.y.z`). Git tags follow the Go rule (`vX.Y.Z`);
+`src/VERSION` is bare semver (`x.y.z`). Git tags follow the Go rule (`vX.Y.Z`);
 Docker tags follow the Docker rule (`kapetim/cli:X.Y.Z`) — same number.
 Tag-driven: `main` pushes auto-tag, and the release publishes the image and the
 `cli` binaries.

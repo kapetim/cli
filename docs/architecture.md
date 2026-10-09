@@ -27,5 +27,5 @@ the Go tree.
 
 ## Versioning
 
-`VERSION` is bare semver (`x.y.z`). Git tags use the Go rule (`vX.Y.Z`); Docker
+`src/VERSION` is bare semver (`x.y.z`). Git tags use the Go rule (`vX.Y.Z`); Docker
 tags use the Docker rule (`kapetim/cli:X.Y.Z`) — the same number.

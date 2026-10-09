@@ -10,7 +10,7 @@ set -euo pipefail
 
 OWNER="kapetim"
 REPO="cli"
-VERSION="${CLI_VERSION:-$(tr -d '[:space:]' < "$(dirname "${BASH_SOURCE[0]}")/../VERSION")}"
+VERSION="${CLI_VERSION:-$(tr -d '[:space:]' < "$(dirname "${BASH_SOURCE[0]}")/../src/VERSION")}"
 BIN_DIR="${CLI_BIN_DIR:-$PWD/.bin}"
 
 while [[ $# -gt 0 ]]; do
