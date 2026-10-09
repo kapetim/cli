@@ -13,7 +13,7 @@ they run the binary from the image.
 
 The module is `github.com/kapetim/cli`; the entrypoint is `src/main.go`, public
 packages live under `src/pkg/`, unit + integration tests under `src/test/`, and
-docs under `src/docs/`. Shell (`scripts/`) and the image (`docker/`) sit beside
+docs under `docs/`. Shell (`scripts/`) and the image (`docker/`) sit beside
 the Go tree.
 
 ## Boundaries

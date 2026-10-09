@@ -52,7 +52,7 @@ go build -o cli ./src
 src/main.go            binary entrypoint
 src/pkg/               public packages (importable)
 src/test/              unit + integration tests
-src/docs/              documentation
+docs/              documentation
 docker/cli.Dockerfile  the published image
 docker/runtime/        pinned installers + versions.env
 scripts/               operational shell
@@ -67,6 +67,6 @@ Tag-driven: `main` pushes auto-tag, and the release publishes the image and the
 
 ## Docs
 
-- [`src/docs/architecture.md`](src/docs/architecture.md)
-- [`src/docs/docker.md`](src/docs/docker.md)
-- [`src/docs/api.md`](src/docs/api.md)
+- [`docs/architecture.md`](docs/architecture.md)
+- [`docs/docker.md`](docs/docker.md)
+- [`docs/api.md`](docs/api.md)
